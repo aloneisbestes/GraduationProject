@@ -15,17 +15,15 @@ private:
 
 public:
     /** 构造与析构 **/
-    HttpBase(const std::string &m_ip="", int m_port=-1);
-    HttpBase(const HttpBase &http_base);
-    ~HttpBase();
+    HttpBase(const std::string &ip="", int port=-1):m_ip(ip), m_port(port){}
+    HttpBase(const HttpBase &http_base):m_ip(http_base.m_ip), m_port(http_base.m_port){}
+    ~HttpBase(){}
 
 public:
-    // 获取和设置ip
-    const std::string &getIP() const { return m_ip; }
-    void setIP(const std::string &ip) { m_ip = ip; }
-    // 获取和设置端口
-    int getPort() const { return m_port; }
-    void setPort(int port) { m_port = port; }
+    // 获取ip
+    inline const std::string &getIP() const { return m_ip; }
+    // 获取端口
+    inline int getPort() const { return m_port; }
 
 public:
     virtual int run() = 0;
