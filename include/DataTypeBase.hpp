@@ -1,5 +1,5 @@
 #ifndef __DATA_TYPE_BASE_HPP__
-#define  __DATA_TYPE_BASE_HPP__
+#define __DATA_TYPE_BASE_HPP__
 
 /**
  * @file DataTypeBase.hpp

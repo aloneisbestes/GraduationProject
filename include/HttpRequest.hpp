@@ -4,6 +4,7 @@
 #include <map>
 #include "HttpBase.hpp"
 #include "DataTypeBase.hpp"
+#include "mmacro.hpp"
 
 class HttpRequest : public HttpBase {
 private:
@@ -16,12 +17,14 @@ private:
     MapStr m_header;            // 请求头信息
     char *m_data;               // 请求的所有数据
     int m_start;                // 开始位置
+    int m_size;                 // 当前数据大小
     int m_capacity;             // 所有数据的容量
     DataTypeBase *m_content;    // 请求携带的参数
+    int m_mode;                 // 使用的是epoll的那种模式，如果传入-1表示没有使用epoll机制
 
 public:
     /** 构造与析构 **/
-    HttpRequest(int sockfd=-1);
+    HttpRequest(int sockfd=-1, int mode=EPOLLIN_MODE);
     HttpRequest(const HttpRequest &req);
     ~HttpRequest();
 
@@ -40,14 +43,17 @@ public:
 
 public:
     /** 继承的虚函数和纯虚函数 **/
-    bool run() override;
+    virtual bool run() override;
+
+protected:
+    /** 内部私有处理函数 **/
+    int readData();    // 读取socket网络套接字上的数据
+    int parseRequestLine();    // 解析请求行
+    int parseRequestHeader();  // 解析请求体
+    int parseRequestContent(); // 解析请求携带的内容
 
 private:
-    /** 内部私有处理函数 **/
-    bool readData();    // 读取socket网络套接字上的数据
-    bool parseRequestLine();    // 解析请求行
-    bool parseRequestHeader();  // 解析请求体
-    bool parseRequestContent(); // 解析请求携带的内容
+    bool dilatation();  // 扩容操作
 };
 
 
