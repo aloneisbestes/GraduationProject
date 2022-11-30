@@ -14,6 +14,8 @@ HttpRequest::HttpRequest(int sockfd, int mode)
     m_capacity = DefaultCapacity;
     m_data = new char[m_capacity];
     m_start = 0;
+    m_now_idx = 0;
+    m_parse_state = ParseStatus::ParseLine; // 初始化为请求请求行
 }
 
 HttpRequest::HttpRequest(const HttpRequest &req)
@@ -28,6 +30,8 @@ HttpRequest::HttpRequest(const HttpRequest &req)
     m_version = req.m_version;
     m_size = req.m_size;
     m_mode = req.m_mode;
+    m_now_idx = req.m_now_idx;
+    m_parse_state = req.m_parse_state;
 }
 
 HttpRequest::~HttpRequest() {
@@ -35,8 +39,51 @@ HttpRequest::~HttpRequest() {
         delete m_data;
 }
 
-bool HttpRequest::run() {
+int HttpRequest::run() {
+    int ret;
+    // 读取数据
+    if ((ret = readData()) != Success) {
+        // 表示读取数据失败
+        return ret;
+    }
+
     // 主要的解析逻辑
+    ParseStatus parse_ret;
+    LineStatus line_state = LineStatus::LineComplete;
+    m_parse_state = ParseStatus::ParseLine;
+    char *text = nullptr;
+    while ((line_state == LineComplete && m_parse_state == ParseContent) || \
+           (line_state = getLine()) == LineComplete) 
+    {
+        text = m_data + m_start;
+        m_start = m_now_idx;
+        switch (m_parse_state) {
+            case ParseStatus::ParseLine: {
+                // 解析请求行
+                parse_ret = parseRequestLine(text);
+                // 对返回值做处理
+                break;
+            }
+            case ParseStatus::ParseHeader: {
+                // 解析请求头
+                parse_ret = parseRequestHeader(text);
+                // 对返回值做处理
+                break;
+            }
+            case ParseStatus::ParseContent: {
+                parse_ret = parseRequestContent(text);
+                // 对返回值做处理
+                break;
+            }
+            default: {
+                // 如果是其它请求，则表示服务器错误，设置 erridx，并直接return
+                //erridx = 
+                // return 
+            }
+        }
+    }
+
+    return Success;
 }
 
 // 读取socket网络套接字上的数据
@@ -98,17 +145,17 @@ int HttpRequest::readData() {
 }   
 
 // 解析请求行
-int HttpRequest::parseRequestLine() {
+HttpRequest::ParseStatus HttpRequest::parseRequestLine(char *line) {
 
 }
 
 // 解析请求体
-int HttpRequest::parseRequestHeader() {
+HttpRequest::ParseStatus HttpRequest::parseRequestHeader(char *line) {
 
 }
 
 // 解析请求携带的内容
-int HttpRequest::parseRequestContent() {
+HttpRequest::ParseStatus HttpRequest::parseRequestContent(char *line) {
 
 }
 
@@ -125,4 +172,34 @@ bool HttpRequest::dilatation() {
     // 开辟成功，容量扩容，返回true
     m_capacity *= 2;
     return true;
+}
+
+// 获取请求数据的一行内容
+HttpRequest::LineStatus HttpRequest::getLine() {
+    for (m_now_idx; m_now_idx < m_size; m_now_idx++) {
+        if (m_data[m_now_idx] == '\r') {
+            if ((m_now_idx+1) >= m_size) {
+                // 表示当前是一个不完整的请求
+                return LineStatus::LineIncomplete;  // 不完整的请求
+            }
+            if (m_data[m_now_idx+1] == '\n') {
+                // 当前一行是完整的
+                // 表示当前所处 \r 位置, \r\n
+                m_data[m_now_idx++] = '\0';
+                m_data[m_now_idx++] = '\0'; // 这里是将\r\n替换为\0
+                return LineStatus::LineComplete;    // 解析一行完成
+            }
+            return LineStatus::LineFault;   // 错误一行，表示错误的请求
+        } else if (m_data[m_now_idx] == '\n') {
+            if (m_now_idx >= 1 && m_data[m_now_idx-1] == '\r') {
+                // 表示当前所处位置是 \n, \r\n
+                m_data[m_now_idx-1] = '\0';
+                m_data[m_now_idx++] = '\0';
+                return LineStatus::LineComplete;
+            }
+            return LineStatus::LineFault;   // 错误一行，表示当前的请求是错误
+        }
+    }
+
+    return LineStatus::LineIncomplete;  // 不完整的请求
 }
