@@ -43,7 +43,7 @@ public:
     inline int getPort() const { return m_port; }
 
 public:
-    virtual bool run() = 0;
+    virtual int run() = 0;
 };
 
 #endif // __HTTP_BASE_H__
