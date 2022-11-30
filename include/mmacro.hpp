@@ -12,8 +12,6 @@
  * 
  */
 
-#include <a.out.h>
-
 // 定义使用的模式，epoll使用的模式，是EPOLLIN还是EPOLLET，该模式可以组合使用，例如: MODTH_IN | MODTH_ET
 #define EPOLLIN_MODE    0x01
 #define EPOLLET_MODE    0x02
