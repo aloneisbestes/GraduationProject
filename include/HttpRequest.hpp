@@ -12,6 +12,21 @@ private:
     // 默认容量
     const int DefaultCapacity = 4096;
 
+    // 获取一行状态
+    enum LineStatus {
+        LineComplete=0,     // 获取一行完成
+        LineFault,          // 获取一行错误
+        LineIncomplete,     // 不完整的行，代表当前请求不完整
+    };
+
+    // 解析http状态
+    enum ParseStatus {
+        ParseLine,      // 解析请求行
+        ParseHeader,    // 解析请求体
+        ParseContent,   // 解析请求内容
+        ParseComplete,  // 解析完成
+    };
+
 private:
     std::string m_url;          // 请求地址
     MapStr m_header;            // 请求头信息
@@ -21,6 +36,8 @@ private:
     int m_capacity;             // 所有数据的容量
     DataTypeBase *m_content;    // 请求携带的参数
     int m_mode;                 // 使用的是epoll的那种模式，如果传入-1表示没有使用epoll机制
+    int m_now_idx;              // 当前所在数据data的index位置
+    ParseStatus m_parse_state;  // http当前解析状态
 
 public:
     /** 构造与析构 **/
@@ -43,14 +60,15 @@ public:
 
 public:
     /** 继承的虚函数和纯虚函数 **/
-    virtual bool run() override;
+    virtual int run() override;
 
-protected:
+private:
     /** 内部私有处理函数 **/
     int readData();    // 读取socket网络套接字上的数据
-    int parseRequestLine();    // 解析请求行
-    int parseRequestHeader();  // 解析请求体
-    int parseRequestContent(); // 解析请求携带的内容
+    ParseStatus parseRequestLine(char *line);    // 解析请求行
+    ParseStatus parseRequestHeader(char *line);  // 解析请求体
+    ParseStatus parseRequestContent(char *line); // 解析请求携带的内容
+    LineStatus getLine();        // 获取请求数据的一行内容
 
 private:
     bool dilatation();  // 扩容操作
