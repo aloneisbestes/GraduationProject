@@ -25,10 +25,12 @@ private:
         ParseHeader,    // 解析请求体
         ParseContent,   // 解析请求内容
         ParseComplete,  // 解析完成
+        ParseFault,       // 解析失败
     };
 
 private:
     std::string m_url;          // 请求地址
+    std::string m_version;      // http版本
     MapStr m_header;            // 请求头信息
     char *m_data;               // 请求的所有数据
     int m_start;                // 开始位置
@@ -38,6 +40,7 @@ private:
     int m_mode;                 // 使用的是epoll的那种模式，如果传入-1表示没有使用epoll机制
     int m_now_idx;              // 当前所在数据data的index位置
     ParseStatus m_parse_state;  // http当前解析状态
+    RequestType m_type;         // 请求类型和方式, get、post
 
 public:
     /** 构造与析构 **/
