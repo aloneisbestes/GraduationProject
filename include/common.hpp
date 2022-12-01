@@ -12,5 +12,12 @@
  * 
  */
 
+#include <stdio.h>
+
+/** 打印测试宏 **/
+#define DebugPrint(format, ...) { \
+    printf("Debug: ");\
+    printf(format, __VA_ARGS__);\
+}
 
 #endif // __COMMON_HPP__
