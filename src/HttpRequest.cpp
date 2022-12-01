@@ -3,10 +3,14 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <malloc.h>
+#include <string>
+#include <strings.h>
+#include <stdlib.h>
 #include "HttpRequest.hpp"
 #include "common.hpp"
 #include "ErrorMessage.hpp"
-std::string;
+
+using std::string;
 
 HttpRequest::HttpRequest(int sockfd, int mode) 
     : HttpBase(sockfd), m_mode(mode), m_size(0)
@@ -146,7 +150,41 @@ int HttpRequest::readData() {
 
 // 解析请求行
 HttpRequest::ParseStatus HttpRequest::parseRequestLine(char *line) {
+    char *tmp = nullptr;
 
+    // 获取请求类型
+    // line = strpbrk(tmp, " ");
+    line += strspn(tmp, " \t");
+    tmp = strchr(line, ' ');
+    if (tmp == nullptr)
+        return ParseStatus::ParseFault;
+    *tmp = '\0';
+    if (strncasecmp(line, "GET", 4) == 0) { // GET 请求
+        m_type = RequestType::GetRequest;
+    } else if (strncasecmp(line, "POST", 4) == 0) { // POST 请求
+        m_type = RequestType::PostRequest;
+    } else {
+        // 表示这不是一个能处理的请求
+        return ParseStatus::ParseFault;
+    }
+
+    // 获取url
+    line += strspn(tmp, " \t");
+    tmp = strchr(line, ' ');
+    if (tmp == nullptr) 
+        return ParseStatus::ParseFault;
+    *tmp = '\0';
+    m_url = line;
+
+    // 获取http协议版本号
+    tmp = strchr(line, ' ');
+    if (tmp == nullptr)    
+        return ParseStatus::ParseFault;    
+    *tmp = '\0';
+    m_version = line;
+
+    m_parse_state = ParseStatus::ParseHeader;
+    return ParseStatus::ParseComplete;
 }
 
 // 解析请求体
