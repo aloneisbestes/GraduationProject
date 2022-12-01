@@ -12,8 +12,12 @@
  * 
  */
 
-
 #include <string>
+
+enum RequestType {
+    GetRequest,     // get请求
+    PostRequest,    // post请求
+};
 
 class HttpBase{
 private:
